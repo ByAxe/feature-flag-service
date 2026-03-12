@@ -41,7 +41,7 @@ class FeatureFlagServiceTest {
                 30,
                 targetUsers("  user-1 ", "", "user-1", "user-2 ", "USER-2"));
 
-        when(repository.existsByKey("new-checkout-flow")).thenReturn(false);
+        when(repository.existsByCanonicalKey("new-checkout-flow")).thenReturn(false);
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         FeatureFlagResponse response = service.create(request);
@@ -50,7 +50,7 @@ class FeatureFlagServiceTest {
         assertThat(response.enabled()).isTrue();
         assertThat(response.rolloutPercentage()).isEqualTo(30);
         assertThat(response.targetUserIds()).containsExactlyInAnyOrder("user-1", "user-2", "USER-2");
-        verify(repository).existsByKey("new-checkout-flow");
+        verify(repository).existsByCanonicalKey("new-checkout-flow");
         verify(repository).save(any());
     }
 
@@ -58,20 +58,20 @@ class FeatureFlagServiceTest {
     void shouldRejectDuplicateCanonicalKeyOnCreate() {
         FeatureFlagRequest request = new FeatureFlagRequest("Dup-Flow", "desc", true, 10, Set.of("user-1"));
 
-        when(repository.existsByKey("dup-flow")).thenReturn(true);
+        when(repository.existsByCanonicalKey("dup-flow")).thenReturn(true);
 
         assertThatThrownBy(() -> service.create(request))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("Flag with key 'dup-flow' already exists");
 
-        verify(repository).existsByKey("dup-flow");
+        verify(repository).existsByCanonicalKey("dup-flow");
         verify(repository, never()).save(any());
     }
 
     @Test
     void shouldUpdateExistingFlagWithoutChangingKey() {
         FeatureFlag existing = featureFlag("update-flow", false, 10, Set.of("legacy-user"));
-        when(repository.findByKey("update-flow")).thenReturn(Optional.of(existing));
+        when(repository.findByCanonicalKey("update-flow")).thenReturn(Optional.of(existing));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         FeatureFlagUpdateRequest request = new FeatureFlagUpdateRequest(
@@ -91,7 +91,7 @@ class FeatureFlagServiceTest {
 
     @Test
     void shouldReturnNotFoundForMissingFlagOnUpdate() {
-        when(repository.findByKey("missing-flag")).thenReturn(Optional.empty());
+        when(repository.findByCanonicalKey("missing-flag")).thenReturn(Optional.empty());
 
         FeatureFlagUpdateRequest request = new FeatureFlagUpdateRequest("desc", true, 0, Set.of());
 
@@ -102,7 +102,7 @@ class FeatureFlagServiceTest {
 
     @Test
     void shouldReturnNotFoundForMissingFlagOnDelete() {
-        when(repository.findByKey("missing-delete")).thenReturn(Optional.empty());
+        when(repository.findByCanonicalKey("missing-delete")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.delete("missing-delete"))
                 .isInstanceOf(NotFoundException.class)

@@ -70,7 +70,7 @@ public class FeatureFlagController {
             @Valid @RequestBody EvaluateRequest request) {
         String resolvedRequestId = resolveRequestId(requestId, legacyRequestId);
         var result = evaluationService.evaluate(request.flagKey(), request.userId(), resolvedRequestId);
-        return new EvaluationResponse(result.flagKey(), result.enabled(), result.reason().name());
+        return toEvaluationResponse(result);
     }
 
     @PostMapping("/evaluate-all")
@@ -80,7 +80,7 @@ public class FeatureFlagController {
             @Valid @RequestBody EvaluateAllRequest request) {
         String resolvedRequestId = resolveRequestId(requestId, legacyRequestId);
         return evaluationService.evaluateAll(request.userId(), resolvedRequestId).stream()
-                .map(result -> new EvaluationResponse(result.flagKey(), result.enabled(), result.reason().name()))
+                .map(this::toEvaluationResponse)
                 .toList();
     }
 
@@ -90,5 +90,9 @@ public class FeatureFlagController {
                 .map(String::trim)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private EvaluationResponse toEvaluationResponse(com.demo.featureflagservice.service.evaluation.EvaluationResult result) {
+        return new EvaluationResponse(result.flagKey(), result.enabled(), result.reason().name());
     }
 }

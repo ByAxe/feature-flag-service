@@ -25,7 +25,7 @@ public class FeatureFlagService {
 
     public FeatureFlagResponse create(FeatureFlagRequest request) {
         String canonicalKey = request.normalizedKey();
-        if (repository.existsByKey(canonicalKey)) {
+        if (repository.existsByCanonicalKey(canonicalKey)) {
             throw new ConflictException("Flag with key '%s' already exists".formatted(canonicalKey));
         }
 
@@ -50,7 +50,7 @@ public class FeatureFlagService {
 
     @Transactional(readOnly = true)
     public FeatureFlag getByKey(String key) {
-        return repository.findByKey(NormalizationUtils.normalizeKey(key))
+        return repository.findByCanonicalKey(NormalizationUtils.normalizeKey(key))
                 .orElseThrow(() -> new NotFoundException("Flag '%s' not found".formatted(key)));
     }
 

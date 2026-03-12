@@ -12,6 +12,13 @@ Build a greenfield Spring Boot 3.x service on Java 21 with Gradle that supports:
 
 The repo is currently empty, so this plan assumes a from-scratch implementation. It keeps Docker packaging optional, as the PRD marks containerization as optional and does not define a deployment platform.
 
+## Plan Status Update (2026-03-12)
+- Aligned code with review feedback by moving duplicate-key handling fully to canonical keys at service/repository boundaries and removing redundant config duplication.
+- Resolved `FeatureFlagServiceTest` expectations to match canonical lookups (`existsByCanonicalKey` / `findByCanonicalKey`) after API behavior fixes.
+- Re-ran full local validation required by the requested workflow:
+  - `./gradlew test`
+  - `./gradlew integrationTest`
+
 ## Assumptions
 - Deployment target is not specified; CI/CD means GitHub Actions CI plus a deployable runnable service artifact.
 - Persistence for usage analytics will come from an `evaluation_log` table because the PRD requires both per-request logging and aggregate usage stats.
