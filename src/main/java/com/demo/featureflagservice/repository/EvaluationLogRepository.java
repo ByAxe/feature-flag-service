@@ -10,17 +10,22 @@ import org.springframework.data.repository.query.Param;
 public interface EvaluationLogRepository extends JpaRepository<EvaluationLog, Long> {
 
     @Query("""
-        select count(e), count(distinct e.userId)
+        select new com.demo.featureflagservice.repository.GlobalStatsRow(
+            count(e),
+            count(distinct e.userId)
+        )
         from EvaluationLog e
         """)
     GlobalStatsRow fetchGlobalStats();
 
     @Query("""
-        select count(e),
-               count(distinct e.userId),
-               sum(case when e.result = true then 1 else 0 end),
-               sum(case when e.result = false then 1 else 0 end),
-               max(e.evaluatedAt)
+        select new com.demo.featureflagservice.repository.FlagStatsRow(
+            count(e),
+            count(distinct e.userId),
+            sum(case when e.result = true then 1 else 0 end),
+            sum(case when e.result = false then 1 else 0 end),
+            max(e.evaluatedAt)
+        )
         from EvaluationLog e
         where e.flagKey = :flagKey
         """)
