@@ -106,9 +106,9 @@ T1 ──┬── T2 ──┬── T4 ──┬── T5 ──────�
 - **location**: `src/main/java/.../service/stats/`, `src/main/java/.../repository/`
 - **description**: Add the write path for `EvaluationLog` entries and repository/service logic to compute `GET /api/stats` and `GET /api/stats/{flagKey}`. Stats must include total evaluations, unique users, active flags count for global stats, and total evaluations, unique users, true/false ratio, and last evaluated timestamp for per-flag stats. Reuse the same reason/result contract produced by the evaluation engine so logs, responses, and aggregates cannot drift.
 - **validation**: Aggregation methods can answer both stats endpoints directly from persisted evaluation data, the result shape matches the PRD, and logged evaluation outcomes are consistent with the evaluation engine contract.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Added stats aggregation on top of persisted `EvaluationLog` rows for both global and per-flag endpoints, including total counts, unique users, true/false counts and ratios, and last evaluation timestamp. Kept per-flag stats keyed to canonical stored flag keys to avoid key-case drift while preserving not-found behavior for unknown flags.
+- **files edited/created**: src/main/java/com/demo/featureflagservice/service/stats/StatsService.java, feature-flag-service-mvp-plan.md
 
 ### T8: Implement evaluation and stats endpoints plus structured logging
 - **depends_on**: [T3, T5, T6, T7, T9]
