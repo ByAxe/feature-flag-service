@@ -9,6 +9,7 @@ import com.demo.featureflagservice.error.NotFoundException;
 import com.demo.featureflagservice.repository.FeatureFlagRepository;
 import com.demo.featureflagservice.util.NormalizationUtils;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,13 +78,14 @@ public class FeatureFlagService {
     }
 
     private FeatureFlagResponse toResponse(FeatureFlag entity) {
+        Set<String> targetUserIds = Set.copyOf(entity.getTargetUserIds());
         return new FeatureFlagResponse(
                 entity.getId(),
                 entity.getKey(),
                 entity.getDescription(),
                 entity.isEnabled(),
                 entity.getRolloutPercentage(),
-                entity.getTargetUserIds(),
+                targetUserIds,
                 entity.getCreatedAt(),
                 entity.getUpdatedAt());
     }
