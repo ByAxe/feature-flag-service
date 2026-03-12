@@ -88,9 +88,9 @@ T1 ──┬── T2 ──┬── T4 ──┬── T5 ──────�
 - **location**: `src/main/java/.../service/`, `src/main/java/.../controller/`
 - **description**: Build application services and controllers for `POST /api/flags`, `GET /api/flags`, `GET /api/flags/{key}`, `PUT /api/flags/{key}`, and `DELETE /api/flags/{key}`. Enforce unique-key conflicts, immutable keys, lowercase canonicalization, and expected HTTP semantics (`201`, `204`, `404`, `409`).
 - **validation**: CRUD endpoints map exactly to the PRD, duplicate or casing-equivalent keys return conflict, missing resources return not found, and update behavior excludes `key` mutation.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Implemented CRUD service/controller behavior for canonicalized flag keys with deterministic 201/204/404/409 semantics, including case-insensitive conflict detection at create/update/read/delete boundaries, path-based canonical lookup, and immutable key enforcement by excluding key from update state changes. Added focused integration coverage for canonicalized create/update/read/delete flows and immutable-key update payload behavior.
+- **files edited/created**: src/main/java/com/demo/featureflagservice/dto/FeatureFlagRequest.java, src/main/java/com/demo/featureflagservice/service/FeatureFlagService.java, src/test/java/com/demo/featureflagservice/controller/FeatureFlagControllerIT.java, feature-flag-service-mvp-plan.md
 
 ### T6: Implement deterministic evaluation engine
 - **depends_on**: [T3, T4]
