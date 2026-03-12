@@ -97,9 +97,9 @@ T1 ──┬── T2 ──┬── T4 ──┬── T5 ──────�
 - **location**: `src/main/java/.../service/evaluation/`, `src/main/java/.../util/`
 - **description**: Implement the evaluation algorithm with strict PRD order: disabled flag returns `DISABLED`; targeted user returns `TARGET_LIST`; `100` returns `FULL_ROLLOUT`; `0` returns `NO_ROLLOUT`; otherwise deterministic `hash(flagKey + userId) % 100 < rolloutPercentage` returns `PERCENTAGE_ROLLOUT`. Keep the hashing deterministic and isolated behind a testable component, and define service-level behavior for invalid or blank `userId` and unknown flag keys so controllers can produce stable API semantics.
 - **validation**: Evaluation logic is deterministic for the same `(flagKey, userId)`, reasons match the PRD enum values, branch priority cannot be reordered accidentally by callers, and invalid-input / missing-flag outcomes are explicit rather than implicit.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Added strict, deterministic evaluation flow with explicit PRD priority (`DISABLED` → `TARGET_LIST` → `FULL_ROLLOUT` → `NO_ROLLOUT` → `PERCENTAGE_ROLLOUT`), SHA-backed deterministic hash strategy coverage with expanded unit tests, and explicit service-level validation for missing flags and blank user IDs in both single and evaluate-all paths. Created `EvaluationServiceTest` for decision branches and failure modes.
+- **files edited/created**: src/main/java/com/demo/featureflagservice/service/evaluation/EvaluationService.java, src/test/java/com/demo/featureflagservice/service/evaluation/EvaluationServiceTest.java, src/test/java/com/demo/featureflagservice/service/evaluation/HashingRolloutStrategyTest.java
 
 ### T7: Implement evaluation logging and statistics aggregation
 - **depends_on**: [T2, T4, T6]
