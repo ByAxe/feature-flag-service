@@ -33,8 +33,12 @@ public class EvaluationService {
     }
 
     public EvaluationResult evaluate(String flagKey, String userId) {
+        return evaluate(flagKey, userId, null);
+    }
+
+    public EvaluationResult evaluate(String flagKey, String userId, String requestId) {
         long startedAt = System.nanoTime();
-        String requestId = UUID.randomUUID().toString();
+        String resolvedRequestId = resolveRequestId(requestId);
         String resolvedFlagKey = flagKey;
         String resolvedUserId = userId;
         try {
@@ -43,18 +47,23 @@ public class EvaluationService {
             FeatureFlag featureFlag = featureFlagService.getByKey(resolvedFlagKey);
             EvaluationResult result = evaluate(featureFlag, resolvedUserId);
             persistLog(result, resolvedUserId);
-            auditLogger.logSuccess(requestId, resolvedUserId, result, elapsedMillis(startedAt));
+            auditLogger.logSuccess(resolvedRequestId, resolvedUserId, result, elapsedMillis(startedAt));
             return result;
         } catch (RuntimeException exception) {
-            auditLogger.logFailure(requestId, resolvedFlagKey, resolvedUserId, exception.getMessage(), elapsedMillis(startedAt));
+            auditLogger.logFailure(resolvedRequestId, resolvedFlagKey, resolvedUserId, exception.getMessage(), elapsedMillis(startedAt));
             throw exception;
         }
     }
 
     public List<EvaluationResult> evaluateAll(String userId) {
+        return evaluateAll(userId, null);
+    }
+
+    public List<EvaluationResult> evaluateAll(String userId, String requestId) {
+        String resolvedRequestId = resolveRequestId(requestId);
         String normalizedUserId = normalizeUserId(userId);
         return featureFlagService.list().stream()
-                .map(featureFlag -> evaluate(featureFlag.key(), normalizedUserId))
+                .map(featureFlag -> evaluate(featureFlag.key(), normalizedUserId, resolvedRequestId))
                 .toList();
     }
 
@@ -107,5 +116,12 @@ public class EvaluationService {
             throw new IllegalArgumentException("userId is required");
         }
         return userId.trim();
+    }
+
+    private String resolveRequestId(String requestId) {
+        if (requestId == null || requestId.isBlank()) {
+            return UUID.randomUUID().toString();
+        }
+        return requestId.trim();
     }
 }

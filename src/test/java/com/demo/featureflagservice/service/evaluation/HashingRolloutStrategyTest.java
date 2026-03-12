@@ -36,4 +36,11 @@ class HashingRolloutStrategyTest {
     void shouldEvaluateFast() {
         assertTimeoutPreemptively(Duration.ofMillis(50), () -> strategy.isEnabled("flag", "user-42", 50));
     }
+
+    @Test
+    void shouldReturnRegressionValuesForKnownRolloutBuckets() {
+        assertThat(strategy.isEnabled("deterministic-flag", "user-a", 42)).isFalse();
+        assertThat(strategy.isEnabled("deterministic-flag", "user-b", 42)).isTrue();
+        assertThat(strategy.isEnabled("new-checkout-flow", "qa-user", 80)).isTrue();
+    }
 }

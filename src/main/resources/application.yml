@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: feature-flag-service
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - metrics
+  endpoint:
+    health:
+      enabled: true
+      show-details: never
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+logging:
+  level:
+    root: INFO
+    evaluation-audit: INFO

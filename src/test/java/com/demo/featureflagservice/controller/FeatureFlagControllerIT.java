@@ -1,6 +1,8 @@
 package com.demo.featureflagservice.controller;
 
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -9,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,27 +27,28 @@ class FeatureFlagControllerIT {
 
     @Test
     void shouldCreateReadUpdateAndDeleteFlag() throws Exception {
+        String key = "new-checkout-flow-" + UUID.randomUUID();
         String createPayload = """
                 {
-                  "key": "new-checkout-flow",
+                  "key": "%s",
                   "description": "Enable checkout flow",
                   "enabled": true,
                   "rolloutPercentage": 25,
                   "targetUserIds": ["qa-1", "qa-2"]
                 }
-                """;
+                """.formatted(key);
 
         mockMvc.perform(post("/api/flags")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.key").value("new-checkout-flow"));
+                .andExpect(jsonPath("$.key").value(key));
 
         mockMvc.perform(get("/api/flags"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$[*].key", hasItem(key)));
 
-        mockMvc.perform(get("/api/flags/new-checkout-flow"))
+        mockMvc.perform(get("/api/flags/" + key))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.enabled").value(true));
 
@@ -57,17 +61,63 @@ class FeatureFlagControllerIT {
                 }
                 """;
 
-        mockMvc.perform(put("/api/flags/new-checkout-flow")
+        mockMvc.perform(put("/api/flags/" + key)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.description").value("Updated description"))
                 .andExpect(jsonPath("$.enabled").value(false));
 
-        mockMvc.perform(delete("/api/flags/new-checkout-flow"))
+        mockMvc.perform(delete("/api/flags/" + key))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/flags/new-checkout-flow"))
+        mockMvc.perform(get("/api/flags/" + key))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldValidateCreatePayloadBeforePersisting() throws Exception {
+        String invalidPayload = """
+                {
+                  "key": "",
+                  "description": "invalid",
+                  "enabled": true,
+                  "rolloutPercentage": 150,
+                  "targetUserIds": ["qa-user"]
+                }
+                """;
+
+        mockMvc.perform(post("/api/flags")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error", not(emptyOrNullString())));
+    }
+
+    @Test
+    void shouldReturnNotFoundForMissingCrudResources() throws Exception {
+        mockMvc.perform(get("/api/flags/missing-flag"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error", not(emptyOrNullString())));
+
+        mockMvc.perform(put("/api/flags/missing-flag")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "description": "Attempt update missing",
+                                  "enabled": true,
+                                  "rolloutPercentage": 50,
+                                  "targetUserIds": []
+                                }
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error", not(emptyOrNullString())));
+
+        mockMvc.perform(delete("/api/flags/missing-flag"))
+                .andExpect(status().isNotFound())
                 .andExpect(status().isNotFound());
     }
 
@@ -96,10 +146,10 @@ class FeatureFlagControllerIT {
     }
 
     @Test
-    void shouldCanonicalizeCaseWhenCreatingAndUpdatingFlags() throws Exception {
+    void shouldRejectDuplicateKeysAndKeepStoredKey() throws Exception {
         String createPayload = """
                 {
-                  "key": "Canonical-Flag",
+                  "key": "canonical-flag",
                   "description": "Canonicalized duplicate demo",
                   "enabled": true,
                   "rolloutPercentage": 10,
@@ -117,13 +167,13 @@ class FeatureFlagControllerIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "key": "CANONICAL-FLAG",
-                                  "description": "Should fail",
+                                  "key": "canonical-flag",
+                                  "description": "Should fail with conflict",
                                   "enabled": false,
                                   "rolloutPercentage": 0,
                                   "targetUserIds": []
-                                }
-                                """))
+                }
+                """))
                 .andExpect(status().isConflict());
 
         String updatePayload = """

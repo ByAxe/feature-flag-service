@@ -115,9 +115,9 @@ T1 ──┬── T2 ──┬── T4 ──┬── T5 ──────�
 - **location**: `src/main/java/.../controller/`, `src/main/java/.../logging/`, `src/main/resources/`
 - **description**: Implement `POST /api/flags/evaluate`, `POST /api/flags/evaluate-all`, `GET /api/stats`, and `GET /api/stats/{flagKey}`. Ensure each evaluate request emits structured JSON logs with `flagKey`, `userId`, `result`, `reason`, `latency`, and request correlation data where available, and expose baseline Actuator endpoints needed for health and metrics with an explicit allowlist. Define endpoint semantics for blank inputs, unknown flag keys, and evaluate-all behavior so partial failures are not ambiguous.
 - **validation**: Endpoint responses match the PRD examples, evaluate-all behavior is explicitly defined, JSON logs contain the required success and failure fields, health/metrics endpoints are enabled for operational use, and the design includes an acceptance criterion aligned with the `< 50ms p95` evaluation target.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Added request-aware, structured logging and explicit routing for `/api/flags/evaluate`, `/api/flags/evaluate-all`, `/api/stats`, and `/api/stats/{flagKey}`, including request-id correlation from `X-Request-Id`/`Request-Id`, explicit evaluation-all request-id propagation, and allowlisted actuator exposure for `health` and `metrics`. Updated tests for endpoint contracts, unknown-flag errors, and structured audit fields.
+- **files edited/created**: src/main/java/com/demo/featureflagservice/controller/FeatureFlagController.java, src/main/java/com/demo/featureflagservice/logging/EvaluationAuditLogger.java, src/main/java/com/demo/featureflagservice/service/evaluation/EvaluationService.java, src/main/resources/application.yml, src/test/java/com/demo/featureflagservice/controller/EvaluationAndStatsIT.java, src/test/java/com/demo/featureflagservice/controller/ActuatorEndpointsIT.java, src/test/java/com/demo/featureflagservice/service/evaluation/EvaluationServiceTest.java
 
 ### T9: Add global error handling and not-found semantics
 - **depends_on**: [T3, T4, T5, T6]
@@ -133,18 +133,18 @@ T1 ──┬── T2 ──┬── T4 ──┬── T5 ──────�
 - **location**: `.github/workflows/`, optional `Dockerfile`, optional `docker-compose.yml`
 - **description**: Add a GitHub Actions workflow that runs on push and pull request, sets up Java 21 and Gradle, executes the build and tests, validates migrations/configuration as part of the pipeline, and uploads concrete review artifacts such as test reports and the built application package. Keep Docker packaging as an optional follow-on deliverable if time remains after the core MVP.
 - **validation**: Workflow definition covers push and PR events, uses Gradle-based build/test execution, includes migration/config validation, and publishes the agreed artifact set required by the PRD review flow.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Consolidated CI flow to run `./gradlew check` (unit tests, integration tests via `integrationTest`, and custom verification wiring) plus `./gradlew bootJar` for artifact creation. CI now uploads both test reports and the built boot jar on push/PR for branches `main` and `codex/**`.
+- **files edited/created**: .github/workflows/ci-cd.yml
 
 ### T11: Add unit and integration test suites
 - **depends_on**: [T2, T5, T6, T7, T8, T9]
 - **location**: `src/test/java/`
 - **description**: Implement unit tests for the evaluation engine and service rules, plus MockMvc-based integration tests for CRUD, evaluate, evaluate-all, stats, validation, and error-handling flows. Include deterministic rollout tests, conflict/not-found coverage, malformed-request coverage, migration-backed database tests, and at least one performance-oriented assertion or benchmark around the evaluate path.
 - **validation**: Tests cover all PRD-critical behavior, especially evaluation priority ordering, deterministic hashing, CRUD HTTP semantics, stats calculations, error payload shape, and the main non-functional expectations around evaluation latency and profile-backed persistence.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Added comprehensive unit and integration coverage for evaluation engine, feature-flag service rules, CRUD/evaluate/evaluate-all/stats flows, validation/error semantics, deterministic rollout behavior, and migration-backed persistence behavior. Test fixes from this task surfaced and corrected tuple-shape handling in stats aggregation (`StatsService`) so global/per-flag aggregates remain resilient to provider return formats. Added deterministic state-isolation steps in integration tests for deterministic assertions and fixed flaky ordering assumptions.
+- **files edited/created**: src/main/java/com/demo/featureflagservice/service/stats/StatsService.java, src/test/java/com/demo/featureflagservice/service/evaluation/EvaluationServiceTest.java, src/test/java/com/demo/featureflagservice/service/evaluation/HashingRolloutStrategyTest.java, src/test/java/com/demo/featureflagservice/service/FeatureFlagServiceTest.java, src/test/java/com/demo/featureflagservice/controller/FeatureFlagControllerIT.java, src/test/java/com/demo/featureflagservice/controller/EvaluationAndStatsIT.java, src/test/java/com/demo/featureflagservice/repository/MigrationBackedDatabaseIT.java
 
 ## Parallel Execution Groups
 
