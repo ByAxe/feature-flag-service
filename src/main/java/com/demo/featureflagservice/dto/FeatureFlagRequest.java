@@ -11,7 +11,7 @@ import java.util.Locale;
 
 public record FeatureFlagRequest(
         @NotBlank
-        @Pattern(regexp = "^[A-Za-z0-9-]{1,64}$", message = "key must match [a-z0-9-] and be <= 64 chars")
+        @Pattern(regexp = "^[A-Za-z0-9-]{1,64}$", message = "key must match [a-zA-Z0-9-] and be <= 64 chars")
         String key,
         @Size(max = 512)
         String description,
