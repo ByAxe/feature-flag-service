@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.demo.featureflagservice.domain.EvaluationLog;
 import com.demo.featureflagservice.domain.FeatureFlag;
-import java.util.ArrayList;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -79,47 +78,18 @@ class MigrationBackedDatabaseIT {
                 evaluationLog(flagKey, "user-a", true, base.plusSeconds(20))
         ));
 
-        List<Object> global = flatten(evaluationLogRepository.fetchGlobalStats());
-        assertThat(asLong(global.get(0))).isEqualTo(3);
-        assertThat(asLong(global.get(1))).isEqualTo(2);
+        var global = evaluationLogRepository.fetchGlobalStats();
+        assertThat(global.totalEvaluations()).isEqualTo(3);
+        assertThat(global.uniqueUsers()).isEqualTo(2);
 
-        List<Object> stats = flatten(evaluationLogRepository.fetchFlagStats(flagKey.toUpperCase()));
+        var stats = evaluationLogRepository.fetchFlagStats(flagKey.toUpperCase());
         assertAll(
-                () -> assertThat(asLong(stats.get(0))).isEqualTo(3),
-                () -> assertThat(asLong(stats.get(1))).isEqualTo(2),
-                () -> assertThat(asLong(stats.get(2))).isEqualTo(2),
-                () -> assertThat(asLong(stats.get(3))).isEqualTo(1),
-                () -> assertThat(stats.get(4)).isNotNull()
+                () -> assertThat(stats.totalEvaluations()).isEqualTo(3),
+                () -> assertThat(stats.uniqueUsers()).isEqualTo(2),
+                () -> assertThat(stats.trueCount()).isEqualTo(2),
+                () -> assertThat(stats.falseCount()).isEqualTo(1),
+                () -> assertThat(stats.lastEvaluatedAt()).isNotNull()
         );
-    }
-
-    private static List<Object> flatten(Object value) {
-        List<Object> values = new ArrayList<>();
-        flattenValue(value, values);
-        return values;
-    }
-
-    private static void flattenValue(Object value, List<Object> values) {
-        if (value instanceof Object[] nested) {
-            for (Object nestedValue : nested) {
-                flattenValue(nestedValue, values);
-            }
-        } else {
-            values.add(value);
-        }
-    }
-
-    private static long asLong(Object value) {
-        if (value == null) {
-            return 0L;
-        }
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        if (value instanceof Boolean bool) {
-            return bool ? 1L : 0L;
-        }
-        throw new IllegalArgumentException("Expected numeric value, got " + value.getClass());
     }
 
     private static EvaluationLog evaluationLog(String flagKey, String userId, boolean result, Instant at) {

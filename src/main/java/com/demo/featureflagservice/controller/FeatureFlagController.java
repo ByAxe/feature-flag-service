@@ -85,12 +85,10 @@ public class FeatureFlagController {
     }
 
     private String resolveRequestId(String requestId, String legacyRequestId) {
-        if (requestId != null && !requestId.isBlank()) {
-            return requestId.trim();
-        }
-        if (legacyRequestId != null && !legacyRequestId.isBlank()) {
-            return legacyRequestId.trim();
-        }
-        return null;
+        return java.util.stream.Stream.of(requestId, legacyRequestId)
+                .filter(id -> id != null && !id.isBlank())
+                .map(String::trim)
+                .findFirst()
+                .orElse(null);
     }
 }

@@ -11,12 +11,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.demo.featureflagservice.domain.FeatureFlag;
-import com.demo.featureflagservice.dto.FeatureFlagResponse;
 import com.demo.featureflagservice.error.NotFoundException;
 import com.demo.featureflagservice.logging.EvaluationAuditLogger;
 import com.demo.featureflagservice.repository.EvaluationLogRepository;
 import com.demo.featureflagservice.service.FeatureFlagService;
-import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -131,11 +129,7 @@ class EvaluationServiceTest {
     void shouldUseSingleRequestIdForEvaluateAll() {
         FeatureFlag fullRollout = featureFlag("checkout-banner", true, 100, Set.of("user-1"));
         FeatureFlag noRollout = featureFlag("beta-banner", true, 0, Set.of("user-1"));
-        when(featureFlagService.list()).thenReturn(List.of(
-                featureFlagResponse("checkout-banner"),
-                featureFlagResponse("beta-banner")));
-        when(featureFlagService.getByKey("checkout-banner")).thenReturn(fullRollout);
-        when(featureFlagService.getByKey("beta-banner")).thenReturn(noRollout);
+        when(featureFlagService.listEntities()).thenReturn(List.of(fullRollout, noRollout));
         String userId = "user-1";
 
         List<EvaluationResult> results = evaluationService.evaluateAll(userId, "request-id-all");
@@ -201,7 +195,4 @@ class EvaluationServiceTest {
         return featureFlag;
     }
 
-    private static FeatureFlagResponse featureFlagResponse(String key) {
-        return new FeatureFlagResponse(null, key, "desc", true, 50, Set.of(), Instant.now(), Instant.now());
-    }
 }

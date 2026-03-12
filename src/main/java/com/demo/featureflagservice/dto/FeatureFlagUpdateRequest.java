@@ -1,9 +1,9 @@
 package com.demo.featureflagservice.dto;
 
+import com.demo.featureflagservice.util.NormalizationUtils;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 public record FeatureFlagUpdateRequest(
@@ -13,21 +13,9 @@ public record FeatureFlagUpdateRequest(
         @Min(0)
         @Max(100)
         int rolloutPercentage,
-        Set<String> targetUserIds) {
+        Set<@Size(max = 255) String> targetUserIds) {
 
     public Set<String> normalizedTargetUserIds() {
-        if (targetUserIds == null) {
-            return Set.of();
-        }
-        LinkedHashSet<String> normalized = new LinkedHashSet<>();
-        for (String userId : targetUserIds) {
-            if (userId != null) {
-                String trimmed = userId.trim();
-                if (!trimmed.isEmpty()) {
-                    normalized.add(trimmed);
-                }
-            }
-        }
-        return normalized;
+        return NormalizationUtils.normalizeUserIds(targetUserIds);
     }
 }

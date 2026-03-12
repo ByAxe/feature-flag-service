@@ -45,10 +45,7 @@ public class EvaluationService {
             resolvedFlagKey = canonicalizeFlagKey(flagKey);
             resolvedUserId = normalizeUserId(userId);
             FeatureFlag featureFlag = featureFlagService.getByKey(resolvedFlagKey);
-            EvaluationResult result = evaluate(featureFlag, resolvedUserId);
-            persistLog(result, resolvedUserId);
-            auditLogger.logSuccess(resolvedRequestId, resolvedUserId, result, elapsedMillis(startedAt));
-            return result;
+            return evaluate(featureFlag, resolvedUserId, resolvedRequestId);
         } catch (RuntimeException exception) {
             auditLogger.logFailure(resolvedRequestId, resolvedFlagKey, resolvedUserId, exception.getMessage(), elapsedMillis(startedAt));
             throw exception;
@@ -62,8 +59,8 @@ public class EvaluationService {
     public List<EvaluationResult> evaluateAll(String userId, String requestId) {
         String resolvedRequestId = resolveRequestId(requestId);
         String normalizedUserId = normalizeUserId(userId);
-        return featureFlagService.list().stream()
-                .map(featureFlag -> evaluate(featureFlag.key(), normalizedUserId, resolvedRequestId))
+        return featureFlagService.listEntities().stream()
+                .map(featureFlag -> evaluate(featureFlag, normalizedUserId, resolvedRequestId))
                 .toList();
     }
 
@@ -88,6 +85,19 @@ public class EvaluationService {
         }
         boolean enabled = rolloutStrategy.isEnabled(featureFlag.getKey(), userId, featureFlag.getRolloutPercentage());
         return new EvaluationResult(featureFlag.getKey(), enabled, EvaluationReason.PERCENTAGE_ROLLOUT);
+    }
+
+    private EvaluationResult evaluate(FeatureFlag featureFlag, String userId, String requestId) {
+        long startedAt = System.nanoTime();
+        try {
+            EvaluationResult result = evaluate(featureFlag, userId);
+            persistLog(result, userId);
+            auditLogger.logSuccess(requestId, userId, result, elapsedMillis(startedAt));
+            return result;
+        } catch (RuntimeException exception) {
+            auditLogger.logFailure(requestId, featureFlag != null ? featureFlag.getKey() : null, userId, exception.getMessage(), elapsedMillis(startedAt));
+            throw exception;
+        }
     }
 
     private void persistLog(EvaluationResult result, String userId) {

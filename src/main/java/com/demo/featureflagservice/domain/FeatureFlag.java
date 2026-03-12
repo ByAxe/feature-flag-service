@@ -1,5 +1,6 @@
 package com.demo.featureflagservice.domain;
 
+import com.demo.featureflagservice.util.NormalizationUtils;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -13,10 +14,9 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.UUID;
-import java.util.Locale;
 
 @Entity
 @Table(name = "feature_flag")
@@ -38,7 +38,7 @@ public class FeatureFlag {
     @Column(name = "rollout_percentage", nullable = false)
     private int rolloutPercentage;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "feature_flag_target_user", joinColumns = @JoinColumn(name = "feature_flag_id"))
     @Column(name = "target_user_id", nullable = false)
     private Set<String> targetUserIds = new LinkedHashSet<>();
@@ -54,15 +54,15 @@ public class FeatureFlag {
         Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;
-        key = normalizeKey(key);
-        targetUserIds = normalizeTargetUserIds(targetUserIds);
+        key = NormalizationUtils.normalizeKey(key);
+        targetUserIds = NormalizationUtils.normalizeUserIds(targetUserIds);
     }
 
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
-        key = normalizeKey(key);
-        targetUserIds = normalizeTargetUserIds(targetUserIds);
+        key = NormalizationUtils.normalizeKey(key);
+        targetUserIds = NormalizationUtils.normalizeUserIds(targetUserIds);
     }
 
     public UUID getId() {
@@ -74,7 +74,7 @@ public class FeatureFlag {
     }
 
     public void setKey(String key) {
-        this.key = normalizeKey(key);
+        this.key = NormalizationUtils.normalizeKey(key);
     }
 
     public String getDescription() {
@@ -106,30 +106,7 @@ public class FeatureFlag {
     }
 
     public void setTargetUserIds(Set<String> targetUserIds) {
-        this.targetUserIds = normalizeTargetUserIds(targetUserIds);
-    }
-
-    private String normalizeKey(String value) {
-        if (value == null) {
-            return null;
-        }
-        return value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private Set<String> normalizeTargetUserIds(Set<String> values) {
-        if (values == null) {
-            return new LinkedHashSet<>();
-        }
-        LinkedHashSet<String> normalized = new LinkedHashSet<>();
-        for (String userId : values) {
-            if (userId != null) {
-                String trimmed = userId.trim();
-                if (!trimmed.isEmpty()) {
-                    normalized.add(trimmed);
-                }
-            }
-        }
-        return normalized;
+        this.targetUserIds = NormalizationUtils.normalizeUserIds(targetUserIds);
     }
 
     public Instant getCreatedAt() {

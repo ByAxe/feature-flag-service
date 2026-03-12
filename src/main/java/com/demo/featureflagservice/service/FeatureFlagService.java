@@ -7,8 +7,8 @@ import com.demo.featureflagservice.dto.FeatureFlagUpdateRequest;
 import com.demo.featureflagservice.error.ConflictException;
 import com.demo.featureflagservice.error.NotFoundException;
 import com.demo.featureflagservice.repository.FeatureFlagRepository;
+import com.demo.featureflagservice.util.NormalizationUtils;
 import java.util.List;
-import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,12 +39,17 @@ public class FeatureFlagService {
 
     @Transactional(readOnly = true)
     public List<FeatureFlagResponse> list() {
-        return repository.findAll().stream().map(this::toResponse).toList();
+        return repository.findAllWithTargetUserIds().stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<FeatureFlag> listEntities() {
+        return repository.findAllWithTargetUserIds();
     }
 
     @Transactional(readOnly = true)
     public FeatureFlag getByKey(String key) {
-        return repository.findByKey(canonicalizeKey(key))
+        return repository.findByKey(NormalizationUtils.normalizeKey(key))
                 .orElseThrow(() -> new NotFoundException("Flag '%s' not found".formatted(key)));
     }
 
@@ -83,7 +88,4 @@ public class FeatureFlagService {
                 entity.getUpdatedAt());
     }
 
-    private String canonicalizeKey(String key) {
-        return key == null ? null : key.trim().toLowerCase(Locale.ROOT);
-    }
 }
