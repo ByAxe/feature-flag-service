@@ -124,9 +124,9 @@ T1 ──┬── T2 ──┬── T4 ──┬── T5 ──────�
 - **location**: `src/main/java/.../error/`
 - **description**: Implement global `@ControllerAdvice`, domain exceptions, and validation/error translation so the API consistently returns `{ "error": "...", "status": 4xx }`. Cover validation failures, duplicate key conflicts, missing flag lookups, malformed JSON, type mismatches, and missing required fields for both CRUD and evaluation endpoints.
 - **validation**: All client-visible error responses share one format, controllers do not handcraft error payloads, and `404`/`409`/validation and request-parsing failures are generated centrally.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Added centralized exception translation for not found, conflict, validation, malformed requests, and service-level argument validation. Updated global advice to emit the shared `{ "error": "...", "status": 4xx }` contract across those branches using `ApiErrorResponse`.
+- **files edited/created**: src/main/java/com/demo/featureflagservice/error/GlobalExceptionHandler.java, feature-flag-service-mvp-plan.md
 
 ### T10: Set up GitHub Actions CI and artifact publishing
 - **depends_on**: [T2, T11]
